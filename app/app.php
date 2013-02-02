@@ -1,5 +1,8 @@
 <?php
 
+use Model\LocationFinder;
+use Model\LocationDataMapper;
+use Model\Location;
 use Http\Request;
 use Http\Response;
 use Http\JsonResponse;
@@ -34,7 +37,7 @@ $app->get('/', function (Request $request) use ($app) {
  * Locations
  */
 $app->get('/locations', function (Request $request) use ($app, $con) {
-    $loc = new Model\Locations($con);
+    $loc = new LocationFinder($con);
     $cities = $loc->findAll();
   
     switch($request->guessBestFormat()) {
@@ -51,7 +54,7 @@ $app->get('/locations', function (Request $request) use ($app, $con) {
  * Location
  */
 $app->get('/locations/(\d+)', function (Request $request, $id) use ($app, $con) {
-    $loc = new Model\Locations($con);
+    $loc = new LocationFinder($con);
     $city = $loc->findOneById($id);
  
     if(false === isset($city)) {
@@ -73,14 +76,17 @@ $app->get('/locations/(\d+)', function (Request $request, $id) use ($app, $con) 
  */
 $app->post('/locations', function (Request $request) use ($app, $con) {
     $parameter = $request->getParameter("name", "POST");
-    $loc = new Model\Locations($con);
-
+    
+    $mapper = new LocationDataMapper($con);
+    $location = new Location();
+    $location->setName($parameter);
+    
     if(true === empty($parameter)) {
         throw new HttpException(400, 'Name cannot be empty !');
     }
-
-    $id = $loc->create($parameter);
-
+       
+    $id = $mapper->persist($location);
+    
     switch($request -> guessBestFormat()) { 
         case 'json' :
             return new JsonResponse($id, 201);
@@ -96,8 +102,11 @@ $app->post('/locations', function (Request $request) use ($app, $con) {
  */
 $app->put('/locations/(\d+)', function (Request $request, $id) use ($app, $con) { 
     $name = $request->getParameter("name", "POST");  
-    $loc = new Model\Locations($con);
+
+    $mapper = new LocationDataMapper($con);
+    $loc = new LocationFinder($con);
     $city = $loc->findOneById($id);
+    $city->setName($name);
 
     if(false === isset($city)) {
         throw new NotFoundException('City not found !');
@@ -107,8 +116,7 @@ $app->put('/locations/(\d+)', function (Request $request, $id) use ($app, $con) 
         throw new HttpException(400, 'Name cannot be empty !');
     }
 
-    $loc->update($id, $name);
-    $city = $loc->findOneById($id);
+    $mapper->persist($city);
 
     switch($request -> guessBestFormat()) {
         case 'json' :
@@ -124,14 +132,16 @@ $app->put('/locations/(\d+)', function (Request $request, $id) use ($app, $con) 
  * Delete
  */
 $app->delete('/locations/(\d+)', function (Request $request, $id) use ($app, $con) {
-    $loc = new Model\Locations($con);
+    $loc = new LocationFinder($con);
+    $mapper = new LocationDataMapper($con);
+
     $city = $loc->findOneById($id);
  
     if(false === isset($city)) {
         throw new NotFoundException('City not found !');
     }
 
-    $loc->delete($id);
+    $mapper->remove($city);
     
     switch($request -> guessBestFormat()) {
         case 'json' :

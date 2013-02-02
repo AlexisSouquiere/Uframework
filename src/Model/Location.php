@@ -8,21 +8,29 @@ class Location
     private $name;
     private $createdAt;
 
-    public function __construct($id, $name, \DateTime $createdAt = null)
+    public function __construct()
     {
-        $this->id = $id;
-        $this->name = $name;
-        $this->createdAt = $createdAt;
+        $num = func_num_args();
+
+        switch($num) {
+        case 0 :
+            $this->id = null;
+            $this->name = null;
+            $this->createdAt = new \DateTime(null);
+            break;
+        case 3 : 
+            $this->id = func_get_arg(0);
+            $this->name = func_get_arg(1);
+            $this->createdAt = func_get_arg(2);
+            break;
+
+        default : 
+        }
     }
 
     public function getId()
     {
         return $this->id;
-    }
-   
-    private function setId($id)
-    {
-        $this->id = $id;
     }
 
     public function getName()
@@ -30,7 +38,7 @@ class Location
         return $this->name;
     }
 
-    private function setName($name)
+    public function setName($name)
     {
         $this->name = $name;
     }
@@ -38,10 +46,5 @@ class Location
     public function getCreatedAt()
     {
         return $this->createdAt;
-    }
-
-    private function setCreatedAt(\DateTime $date)
-    {
-        $this->createdAt = $date;
     }
 }
