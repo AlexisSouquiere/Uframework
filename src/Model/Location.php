@@ -7,6 +7,7 @@ class Location
     private $id;
     private $name;
     private $createdAt;
+    private $comments = array();
 
     public function __construct()
     {
@@ -46,5 +47,15 @@ class Location
     public function getCreatedAt()
     {
         return $this->createdAt;
+    }
+
+    public function getComments()
+    {
+        return $this->comments;
+    }
+
+    public function setComments($comments)
+    {
+        $this->comments = $comments;
     }
 }

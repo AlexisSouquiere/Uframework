@@ -56,6 +56,7 @@ $app->get('/locations', function (Request $request) use ($app, $con) {
 $app->get('/locations/(\d+)', function (Request $request, $id) use ($app, $con) {
     $loc = new LocationFinder($con);
     $city = $loc->findOneById($id);
+    $comments = $loc->findCommentsByLocationId($id);
  
     if(false === isset($city)) {
         throw new NotFoundException('City not found !');
@@ -68,7 +69,7 @@ $app->get('/locations/(\d+)', function (Request $request, $id) use ($app, $con) 
         default :
     }
 
-    return $app->render('location.php', ["id" => $city->getId(), "location" => $city->getName()]);
+    return $app->render('location.php', ["id" => $city->getId(), "location" => $city->getName(), "comments" => $comments]);
 });
 
 /**

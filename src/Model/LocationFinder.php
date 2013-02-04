@@ -56,4 +56,22 @@ class LocationFinder implements FinderInterface
         } 
         return null;
     }
+
+    public function findCommentsByLocationId($id)
+    {
+        $query = 'SELECT * FROM COMMENTS WHERE LOCATION_ID = :id';
+        $stmt = $this->con->prepare($query);
+        $stmt->bindValue(':id', $id);
+        $stmt->execute();
+        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $result = array_map(function($row) {
+           $date = null;
+           if(isset($row['CREATED_AT'])) {
+                $date = new \DateTime($row['CREATED_AT']);
+           }
+           return new Comment($row['ID'], $row['USERNAME'], $row['BODY'], $date);
+        }, $result);
+        return $result;
+    }
 }
