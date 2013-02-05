@@ -4,7 +4,7 @@ namespace Model;
 
 interface DataMapperInterface
 {
-    public function persist(Location $location);
+    public function persist($object);
 
-    public function remove(Location $location);
+    public function remove($object);
 }

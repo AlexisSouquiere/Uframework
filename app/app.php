@@ -61,16 +61,14 @@ $app->get('/locations/(\d+)', function (Request $request, $id) use ($app, $con) 
         throw new NotFoundException('City not found !');
     }
 
-    $comments = $loc->findCommentsByLocationId($id);
-
     switch($request -> guessBestFormat()) { 
         case 'json' :
-            return new JsonResponse(["id" => $city->getId(), "location" => $city->getName()]);
+            return new JsonResponse($city);
         
         default :
     }
 
-    return $app->render('location.php', ["id" => $city->getId(), "location" => $city->getName(), "comments" => $comments]);
+    return $app->render('location.php', ['id' => $city->getId(), 'location' => $city->getName(), 'createdAt' => $city->getCreatedAt(), 'comments' => $city->getComments()]);
 });
 
 /**
@@ -84,9 +82,7 @@ $app->get('/locations/(\d+)/comments', function (Request $request, $id) use ($ap
         throw new NotFoundException('City not found !');
     }
 
-    $comments = $loc->findCommentsByLocationId($id);
-
-    return new JsonResponse(["id" => $city->getId(), "comments" => $comments]);
+    return new JsonResponse(["comments" => $city->getComments()]);
 });
 
 /**
@@ -96,8 +92,8 @@ $app->post('/locations', function (Request $request) use ($app, $con) {
     $parameter = $request->getParameter("name", "POST");
     
     $mapper = new LocationDataMapper($con);
-    $location = new Location();
-    $location->setName($parameter);
+    $date = new \DateTime(null);
+    $location = new Location($parameter, $date);
     
     if(true === empty($parameter)) {
         throw new HttpException(400, 'Name cannot be empty !');
@@ -138,7 +134,7 @@ $app->put('/locations/(\d+)', function (Request $request, $id) use ($app, $con) 
 
     switch($request -> guessBestFormat()) {
         case 'json' :
-            return new JsonResponse(["id" => $city["id"], "location" => $city["name"]]);
+            return new JsonResponse($city);
 
         default :
     }
@@ -167,7 +163,7 @@ $app->delete('/locations/(\d+)', function (Request $request, $id) use ($app, $co
 
         default :
     }
-
+    
     return $app->redirect('/locations');
 });
 

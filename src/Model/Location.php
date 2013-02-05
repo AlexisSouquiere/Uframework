@@ -9,24 +9,10 @@ class Location
     private $createdAt;
     private $comments = array();
 
-    public function __construct()
+    public function __construct($name, \DateTime $createdAt = null)
     {
-        $num = func_num_args();
-
-        switch($num) {
-        case 0 :
-            $this->id = null;
-            $this->name = null;
-            $this->createdAt = new \DateTime(null);
-            break;
-        case 3 : 
-            $this->id = func_get_arg(0);
-            $this->name = func_get_arg(1);
-            $this->createdAt = func_get_arg(2);
-            break;
-
-        default : 
-        }
+        $this->name = $name;
+        $this->createdAt = $createdAt;
     }
 
     public function getId()

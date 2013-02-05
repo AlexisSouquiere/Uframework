@@ -9,26 +9,11 @@ class Comment
     private $body;
     private $createdAt;
 
-    public function __construct()
+    public function __construct($username, $body, $createdAt)
     {
-        $num = func_num_args();
-
-        switch($num) {
-        case 0 :
-            $this->id = null;
-            $this->username = null;
-            $this->body = null;
-            $this->createdAt = new \DateTime(null);
-            break;
-        case 4 :
-            $this->id = func_get_arg(0);
-            $this->username = func_get_arg(1);
-            $this->body = func_get_arg(2);
-            $this->createdAt = func_get_arg(3);
-            break;
-
-        default :
-        }
+        $this->username = $username;
+        $this->body = $body;
+        $this->createdAt = $createdAt;
     }
 
     public function getId()

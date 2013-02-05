@@ -13,34 +13,32 @@ class LocationDataMapper implements DataMapperInterface
         $this->con = $con;
     }
 
-    public function persist(Location $location)
+    public function persist($location)
     {
         if ($this->isNew($location)) {
-            $stmt = $this->con->prepare('INSERT INTO LOCATIONS (NAME, CREATED_AT)
-                                         VALUES(:name, :date)');
-            $stmt->bindValue(':name', $location->getName());
-            $stmt->bindValue(':date', $location->getCreatedAt()->format('Y-m-d H:i:s'));
-
-            $stmt->execute();
-
+            $query = 'INSERT INTO LOCATIONS (NAME, CREATED_AT) VALUES(:name, :date)';
+            $parameters = array('name' => $location->getName(), 'date' => $location->getCreatedAt()->format('Y-m-d H:i:s'));
+            $stmt = $this->con->executeQuery($query, $parameters);
+            return $this->con->LastInsertId();
         } 
         else {
-            $stmt = $this->con->prepare('UPDATE LOCATIONS SET NAME = :name WHERE ID = :id');
-            $stmt->bindValue(':name', $location->getName());
-            $stmt->bindValue(':id', $location->getId());
-            $stmt->execute();
+            $query = 'UPDATE LOCATIONS SET NAME = :name WHERE ID = :id';
+            $parameters = array('name' => $location->getName(), 'id' =>  $location->getId());
+            return $this->con->executeQuery($query, $parameters);
         } 
     }
 
-    public function remove(Location $location)
+    public function remove($location)
     {
-        $stmt = $this->con->prepare('DELETE FROM LOCATIONS WHERE ID = :id');
-        $stmt->bindValue(':id', $location->getId());
-        $stmt->execute();
+        $query = 'DELETE FROM LOCATIONS WHERE ID = :id';
+        $parameters = array('id' =>  $location->getId());
+        $stmt = $this->con->executeQuery($query, $parameters);
+        Util::setPropertyValue($location, null);
+        return $stmt;
     }
 
     public function isNew(Location $location)
-    {  
+    {
         return null === $location->getId();
     }
 }

@@ -4,10 +4,21 @@ namespace Dal;
 
 class Connection extends \PDO
 {
-    public function __construct($dsn, $user, $password)
+    /**
+     * @param string $query
+     * @param array  $parameters
+     *
+     * @return bool Returns `true` on success, `false` otherwise
+     */
+    public function executeQuery($query, $parameters = array())
     {
-        parent::__construct($dsn, $user, $password);
-    }
+        $stmt = $this->prepare($query);
 
+        foreach ($parameters as $name => $value) {
+            $stmt->bindValue(':' . $name, $value);
+        }
+
+        return $stmt->execute();
+    }
 
 }

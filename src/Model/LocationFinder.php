@@ -13,27 +13,21 @@ class LocationFinder implements FinderInterface
         $this->con = $con;
     }
  
-    /*function createLocation($row)
+    public function findAll()
     {
-         $date = null;
-         if(false === empty($row['CREATED_AT'])) {
-              $date = new DateTime($row['CREATED_AT']);
-         }
-         return new Location($row['ID'], $row['NAME'], $date);
-    }*/
-
-     public function findAll()
-     {
         $query = 'SELECT * FROM LOCATIONS';
         $stmt = $this->con->prepare($query);
         $stmt->execute();
         $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $result = array_map(function($row) {
            $date = null;
-           if(isset($row['CREATED_AT'])) {
+           if(null !== $row['CREATED_AT']) {
                 $date = new \DateTime($row['CREATED_AT']);
            }    
-           return new Location($row['ID'], $row['NAME'], $date);
+           $location = new Location($row['NAME'], $date);
+           Util::setPropertyvalue($location, $row['ID']);
+           $location->setComments($this->findCommentsByLocationId($location->getId()));
+           return $location;
         }, $result);
         return $result;
     } 
@@ -44,15 +38,18 @@ class LocationFinder implements FinderInterface
         $stmt = $this->con->prepare($query);
         $stmt->bindValue(':id', $id);
         $stmt->execute();
-        $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $row = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
-        $date = null;
-        if(false === empty($row[0]['CREATED_AT'])) {
-            $date = new \DateTime($row['CREATED_AT']);
-        }
 
-        if(false === empty($result)) {
-           return new Location($result[0]['ID'], $result[0]['NAME'], $date);
+        if(false === empty($row)) {
+           $date = null;
+           if(null !== $row[0]['CREATED_AT']) {
+               $date = new \DateTime($row[0]['CREATED_AT']);
+           }
+           $location = new Location($row[0]['NAME'], $date);
+           Util::setPropertyValue($location, $row[0]['ID']);
+           $location->setComments($this->findCommentsByLocationId($location->getId()));
+           return $location;
         } 
         return null;
     }
@@ -67,10 +64,12 @@ class LocationFinder implements FinderInterface
 
         $result = array_map(function($row) {
            $date = null;
-           if(isset($row['CREATED_AT'])) {
+           if(null !== $row['CREATED_AT']) {
                 $date = new \DateTime($row['CREATED_AT']);
            }
-           return new Comment($row['ID'], $row['USERNAME'], $row['BODY'], $date);
+           $comment = new Comment( $row['USERNAME'], $row['BODY'], $date);
+           Util::setPropertyValue($comment, $row['ID']);
+           return $comment;
         }, $result);
         return $result;
     }

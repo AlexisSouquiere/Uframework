@@ -7,13 +7,15 @@
     </head>
     <body>
         <div class="container">
-           <h1><?php echo $location ?></h1>
-           <form action="/locations/<?= $id ?>" method="POST">
+           <h1><?php echo $location; ?></h1>
+           <?php if(null !== $createdAt) { ?>
+           <p><?php echo $createdAt->format('Y-m-d H:i:s'); } ?></p>
+           <form action="/locations/<?= $id; ?>" method="POST">
                 <input type="hidden" name="_method" value="PUT">
-                <input type="text" name="name" value="<?= $location ?>">
+                <input type="text" name="name" value="<?= $location; ?>">
                 <input type="submit" value="Update" class="btn btn-warning">
            </form>
-           <form action="/locations/<?= $id ?>" method="POST">
+           <form action="/locations/<?= $id; ?>" method="POST">
                 <input type="hidden" name="_method" value="DELETE">
                 <input type="submit" value="Delete" class="btn btn-danger" >
            </form>
