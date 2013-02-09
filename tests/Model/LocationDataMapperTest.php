@@ -41,8 +41,7 @@ SQL
 
         $location = new \Model\Location('Paris', new \DateTime(null));
 
-        $id = $mapper->persist($location);
-        \Model\Util::setPropertyvalue($location, $id);
+        $mapper->persist($location);
 
         $rows = $this->con->query('SELECT COUNT(*) FROM locations')->fetch(\PDO::FETCH_NUM);
         $this->assertEquals(1, $rows[0]);

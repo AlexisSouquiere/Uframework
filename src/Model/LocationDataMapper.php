@@ -19,7 +19,9 @@ class LocationDataMapper implements DataMapperInterface
             $query = 'INSERT INTO LOCATIONS (NAME, CREATED_AT) VALUES(:name, :date)';
             $parameters = array('name' => $location->getName(), 'date' => $location->getCreatedAt()->format('Y-m-d H:i:s'));
             $stmt = $this->con->executeQuery($query, $parameters);
-            return $this->con->LastInsertId();
+            $id = $this->con->LastInsertId();
+	    Util::setPropertyValue($location, $id);
+	    return $stmt;
         } 
         else {
             $query = 'UPDATE LOCATIONS SET NAME = :name WHERE ID = :id';

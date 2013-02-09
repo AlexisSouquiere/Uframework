@@ -47,7 +47,7 @@ $app->get('/locations', function (Request $request) use ($app, $con) {
         default :
     }
       
-    return $app->render('locations.php', array('cities' => $cities));
+    return $app->render('locations.php', ['cities' => $cities]);
 });
 
 /**
@@ -99,11 +99,11 @@ $app->post('/locations', function (Request $request) use ($app, $con) {
         throw new HttpException(400, 'Name cannot be empty !');
     }
        
-    $id = $mapper->persist($location);
+    $mapper->persist($location);
     
     switch($request -> guessBestFormat()) { 
         case 'json' :
-            return new JsonResponse($id, 201);
+            return new JsonResponse($location->getId(), 201);
         
         default :
     }

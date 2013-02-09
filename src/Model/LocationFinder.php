@@ -55,7 +55,7 @@ class LocationFinder implements FinderInterface
             $date = new \DateTime($row['CREATED_AT']);
    	}    
    	$location = new Location($row['NAME'], $date);
-   	Util::setPropertyvalue($location, $row['ID']);
+   	Util::setPropertyValue($location, $row['ID']);
    	$location->setComments($this->findCommentsByLocationId($location->getId()));
         return $location;
     }
