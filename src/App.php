@@ -9,6 +9,8 @@ use Http\Response;
 
 class App
 {
+    use EventDispatcherTrait;
+
     /**
      * @var array
      */
@@ -77,7 +79,7 @@ class App
 
         return $this;
 
-    }  
+    }
 
     /**
      * @param string   $pattern
@@ -88,26 +90,26 @@ class App
     public function post($pattern, $callable)
     {
         $this->registerRoute(Request::POST, $pattern, $callable);
-    
+
         return $this;
     }
-    
+
     /**
      * @param string   $pattern
      * @param callable $callable
-     *  
+     *
      * @return App
      */
     public function delete($pattern, $callable)
     {
         $this->registerRoute(Request::DELETE, $pattern, $callable);
-        
+
         return $this;
-    } 
+    }
 
     public function run(Request $request = null)
-    {    
-        if(null === $request) {
+    {
+        if (null === $request) {
            $request = Request::createFromGlobals();
         }
 
@@ -128,6 +130,7 @@ class App
      */
     private function process(Request $request, Route $route)
     {
+        $this->dispatch('process.before', [ $request ]);
         try {
             $arguments = $route->getArguments();
             http_response_code($this->statusCode);
@@ -137,10 +140,10 @@ class App
             $response = call_user_func_array($route->getCallable(), $arguments);
 
             if (false === $response instanceof Response) {
-    		$response = new Response($response);
- 	    }
+            $response = new Response($response);
+         }
 
-            $response->send(); 
+            $response->send();
         } catch (HttpException $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -157,7 +160,7 @@ class App
     {
         $this->routes[] = new Route($method, $pattern, $callable);
     }
- 
+
     public function redirect($to, $statusCode = 302)
     {
         http_response_code($statusCode);

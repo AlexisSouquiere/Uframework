@@ -1,7 +1,10 @@
 {
     "require": {
         "symfony/serializer": "~2.1",
-        "willdurand/negotiation": "1.0.*@dev"
+        "willdurand/negotiation": "1.0.*@dev",
+        "willdurand/geocoder": "*",
+        "kriswallsmith/buzz" : "*",
+        "fabpot/Goutte" : "*"
     },
     "autoload": {
         "psr-0": { "": "src/" }

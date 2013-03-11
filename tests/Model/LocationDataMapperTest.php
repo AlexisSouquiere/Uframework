@@ -8,23 +8,26 @@ class LocationDataMapperTest extends \TestCase
     {
         $this->con = new \Dal\Connection('sqlite::memory:');
         $this->con->exec(<<<SQL
-    CREATE TABLE IF NOT EXISTS locations(
+CREATE TABLE IF NOT EXISTS locations(
     id INTEGER NOT NULL PRIMARY KEY,
     name VARCHAR(250) NOT NULL,
-    created_at DATETIME 
-    );
+    address VARCHAR(250) NOT NULL,
+    description VARCHAR(500),
+    phone_number VARCHAR(20),
+    created_at DATETIME
+);
 SQL
-        );
+    );
     }
 
     public function testPersist()
     {
-        $mapper = new \Model\LocationDataMapper($this->con);
+        $mapper = new \Model\DataMapper\LocationDataMapper($this->con);
 
         $rows = $this->con->query('SELECT COUNT(*) FROM locations')->fetch(\PDO::FETCH_NUM);
         $this->assertEquals(0, $rows[0]);
 
-        $location = new \Model\Location('Paris', new \DateTime(null));
+        $location = new \Model\Entities\Location('BBox', '63 000 Clermont-Ferrand', null, null,  new \DateTime());
 
         $mapper->persist($location);
 
@@ -34,12 +37,12 @@ SQL
 
     public function testRemove()
     {
-        $mapper = new \Model\LocationDataMapper($this->con);
+        $mapper = new \Model\DataMapper\LocationDataMapper($this->con);
 
         $rows = $this->con->query('SELECT COUNT(*) FROM locations')->fetch(\PDO::FETCH_NUM);
         $this->assertEquals(0, $rows[0]);
 
-        $location = new \Model\Location('Paris', new \DateTime(null));
+        $location = new \Model\Entities\Location('BBox', '63 000 Clermont-Ferrand', null, null,  new \DateTime());
 
         $mapper->persist($location);
 
@@ -54,23 +57,22 @@ SQL
 
     public function testUpdate()
     {
-        $mapper = new \Model\LocationDataMapper($this->con);
-        
-        $location = new \Model\Location('Paris', new \DateTime(null));
-        
-        $id = $mapper->persist($location);
-        \Model\Util::setPropertyvalue($location, $id);
+        $mapper = new \Model\DataMapper\LocationDataMapper($this->con);
 
-        $location->setName('Monaco');
-        
+        $location = new \Model\Entities\Location('BBox', '63 000 Clermont-Ferrand', null, null,  new \DateTime());
+
+        $mapper->persist($location);
+
+        $location->setName('BBoxxxx');
+
         $mapper->persist($location);
 
         $query = 'SELECT name FROM locations WHERE id = :id';
         $stmt = $this->con->prepare($query);
-        $stmt->bindValue(':id', $id);
+        $stmt->bindValue(':id', $location->getId());
         $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $this->assertEquals('Monaco', $rows[0]['name']);       
+        $this->assertEquals('BBoxxxx', $rows[0]['name']);
     }
 }

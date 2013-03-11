@@ -14,38 +14,39 @@ class Request
 
     private $parameters;
 
-    function __construct(array $query = array(), array $request = array())
+    public function __construct(array $query = array(), array $request = array())
     {
         $this->parameters = array_merge($query, $request);
     }
 
     public static function createFromGlobals()
     {
-        if(isset($_SERVER['CONTENT_TYPE'])  && 
+        if(isset($_SERVER['CONTENT_TYPE'])  &&
            $_SERVER['CONTENT_TYPE'] === 'application/json') {
                 $data    = file_get_contents('php://input');
                 $request = @json_decode($data, true);
                 $request = array_merge($request, array("_method" => $_SERVER['REQUEST_METHOD']));
-        }
-        else 
+        } else
             $request = $_POST;
-               
+
         return new self($_GET, $request);
     }
-    
+
     public function guessBestFormat()
     {
-	$negotiator   = new \Negotiation\FormatNegotiator();
+    $negotiator   = new \Negotiation\FormatNegotiator();
 
-	$acceptHeader = $_SERVER['HTTP_ACCEPT'];
-	$priorities   = array('html', 'json', '*/*');
+    $acceptHeader = $_SERVER['HTTP_ACCEPT'];
+    $priorities   = array('html', 'json', '*/*');
 
-	return $negotiator->getBest($acceptHeader, $priorities);
+    return $negotiator->getBest($acceptHeader, $priorities);
     }
 
     public function getParameter($name, $default = null)
     {
+        if (isset($this->parameters[$name])) {
             return $this->parameters[$name];
+        }
     }
 
     public function getMethod()
@@ -54,6 +55,7 @@ class Request
         if (self::POST === $method) {
             return $this->getParameter('_method', $method);
         }
+
         return $method;
     }
 
@@ -63,6 +65,7 @@ class Request
         if ($pos = strpos($uri, '?')) {
             $uri = substr($uri, 0, $pos);
         }
+
         return $uri;
     }
 }

@@ -4,8 +4,9 @@ namespace Model;
 
 class LocationsTest extends \TestCase
 {
-	public function test()
-	{
-		$this->assertTrue(interface_exists('Model\FinderInterface'));
-	}
+    public function testInterfaces()
+    {
+        $this->assertTrue(interface_exists('Model\Finder\FinderInterface'));
+        $this->assertTrue(interface_exists('Model\DataMapper\DataMapperInterface'));
+    }
 }

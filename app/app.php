@@ -1,13 +1,10 @@
 <?php
 
-use Model\LocationFinder;
-use Model\LocationDataMapper;
-use Model\Location;
+use Model\Finder\LocationFinder;
+use Model\Finder\PartyFinder;
 use Http\Request;
-use Http\Response;
 use Http\JsonResponse;
 use Exception\HttpException;
-use Exception\NotFoundException;
 use Dal\Connection;
 
 require __DIR__.'/../vendor/autoload.php';
@@ -26,145 +23,115 @@ $app = new \App(new View\TemplateEngine(
 //Connection
 $con = new Connection($dsn, $user, $password);
 
-/**
- * Index
- */
-$app->get('/', function (Request $request) use ($app) {
-    return $app->render('index.php');
+$app->addListener('process.before', function(Request $request) use ($app) {
+    session_start();
+
+    $allowed = [
+        '/' => [ Request::GET ],
+        '/login' => [ Request::GET, Request::POST ],
+        '/locations' => [ Request::GET, Request::POST ],
+        '/locations/(\d+)' => [ Request::GET ],
+        '/locations/(\d+)/comments' => [ Request::GET, Request::POST ],
+        '/locations/(\d+)/parties' => [ Request::GET, Request::POST ],
+        '/parties' => [ Request::GET ],
+        '/parties/(\d+)' => [ Request::GET ],
+    ];
+
+    if (isset($_SESSION['is_authenticated'])
+        && true === $_SESSION['is_authenticated']) {
+        return;
+    }
+
+    foreach ($allowed as $uri => $methods) {
+        if (preg_match(sprintf('#^%s$#', $uri), $request->getUri())
+                && in_array($request->getMethod(), $methods)) {
+                return;
+        }
+    }
+
+    switch ($request->guessBestFormat()) {
+        case 'json':
+            throw new HttpException(401);
+    }
+
+    return $app->redirect('/login');
+});
+
+$app->get('/login', function () use ($app) {
+    if (!isset($_SESSION['is_authenticated']) || false === $_SESSION['is_authenticated']) {
+        return $app->render('FrontEnd/login.php');
+    }
+    $app->redirect('/');
+});
+
+$app->post('/login', function (Request $request) use ($app) {
+    $user = $request->getParameter('user');
+    $pass = $request->getParameter('password');
+
+    if ('admin' === $user && 'admin' === $pass) {
+        $_SESSION['is_authenticated'] = true;
+
+        return $app->redirect('/');
+    }
+
+    return $app->render('FrontEnd/login.php', [ 'user' => $user ]);
+});
+
+$app->get('/logout', function (Request $request) use ($app) {
+    session_destroy();
+
+    return $app->redirect('/');
 });
 
 /**
- * Locations
+ * Index - FrontEnd
  */
-$app->get('/locations', function (Request $request) use ($app, $con) {
+$app->get('/', function (Request $request) use ($app, $con) {
     $loc = new LocationFinder($con);
-    $cities = $loc->findAll();
-  
-    switch($request->guessBestFormat()) {
+    $par = new PartyFinder($con);
+    $date = new \DateTime();
+    $locations = $loc->findAllJustLocations(['order by' => 'CREATED_AT DESC', 'limit' => '0, 5']);
+    $parties = $par->findAll(['where' => 'START_AT > "'.$date->format('Y-m-d H:i:s').'"','order by' => 'START_AT ASC', 'limit' => '0, 5']);
+
+    switch ($request->guessBestFormat()) {
         case 'json' :
-            return new JsonResponse($cities);
+            return new JsonResponse([$locations, $parties]);
 
         default :
     }
-      
-    return $app->render('locations.php', ['cities' => $cities]);
+
+    return $app->render('FrontEnd/index.php', ['locations' => $locations, 'parties' => $parties]);
 });
 
 /**
- * Location
+ * Index - BackEnd
  */
-$app->get('/locations/(\d+)', function (Request $request, $id) use ($app, $con) {
-    $loc = new LocationFinder($con);
-    $city = $loc->findOneById($id);
- 
-    if(false === isset($city)) {
-        throw new NotFoundException('City not found !');
-    }
-
-    switch($request -> guessBestFormat()) { 
-        case 'json' :
-            return new JsonResponse($city);
-        
-        default :
-    }
-
-    return $app->render('location.php', ['id' => $city->getId(), 'location' => $city->getName(), 'createdAt' => $city->getCreatedAt(), 'comments' => $city->getComments()]);
+$app->get('/admin', function (Request $request) use ($app, $con) {
+     return $app->render('BackEnd/index.php');
 });
 
-/**
- * Comments
- */
-$app->get('/locations/(\d+)/comments', function (Request $request, $id) use ($app, $con) {
-    $loc = new LocationFinder($con);
-    $city = $loc->findOneById($id);
+require __DIR__.'/CommentController.php';
+require __DIR__.'/PartyController.php';
+require __DIR__.'/LocationController.php';
 
-    if(false === isset($city)) {
-        throw new NotFoundException('City not found !');
+function getCriterias(Request $request)
+{
+    $limit = $request->getParameter('limit');
+    $order = $request->getParameter('orderBy');
+    $field = $request->getParameter('field');
+    $value = $request->getParameter('value');
+
+    $lim = null;
+    if (isset($limit)) {
+        $lim = '0, ' . $limit;
     }
 
-    return new JsonResponse(["comments" => $city->getComments()]);
-});
-
-/**
- * Post
- */
-$app->post('/locations', function (Request $request) use ($app, $con) {
-    $parameter = $request->getParameter("name", "POST");
-    
-    $mapper = new LocationDataMapper($con);
-    $date = new \DateTime(null);
-    $location = new Location($parameter, $date);
-    
-    if(true === empty($parameter)) {
-        throw new HttpException(400, 'Name cannot be empty !');
-    }
-       
-    $mapper->persist($location);
-    
-    switch($request -> guessBestFormat()) { 
-        case 'json' :
-            return new JsonResponse($location->getId(), 201);
-        
-        default :
-    }
-    
-    return $app->redirect('/locations');
-});
-
-/**
- * Put
- */
-$app->put('/locations/(\d+)', function (Request $request, $id) use ($app, $con) { 
-    $name = $request->getParameter("name", "POST");  
-
-    $mapper = new LocationDataMapper($con);
-    $loc = new LocationFinder($con);
-    $city = $loc->findOneById($id);
-    $city->setName($name);
-
-    if(false === isset($city)) {
-        throw new NotFoundException('City not found !');
+    $where = null;
+    if (isset($field) && isset($value)) {
+        $where = $field . ' LIKE "%'.$value.'%"';
     }
 
-    if(true === empty($name)) {
-        throw new HttpException(400, 'Name cannot be empty !');
-    }
-
-    $mapper->persist($city);
-
-    switch($request -> guessBestFormat()) {
-        case 'json' :
-            return new JsonResponse($city);
-
-        default :
-    }
-            
-    return $app->redirect('/locations/'.$id);
-});
-
-/**
- * Delete
- */
-$app->delete('/locations/(\d+)', function (Request $request, $id) use ($app, $con) {
-    $loc = new LocationFinder($con);
-    $mapper = new LocationDataMapper($con);
-
-    $city = $loc->findOneById($id);
- 
-    if(false === isset($city)) {
-        throw new NotFoundException('City not found !');
-    }
-
-    $mapper->remove($city);
-    
-    switch($request -> guessBestFormat()) {
-        case 'json' :
-            return new JsonResponse($id, 204);
-
-        default :
-    }
-    
-    return $app->redirect('/locations');
-});
+    return ['where' => $where, 'order by' => $order, 'limit' => $lim];
+}
 
 return $app;
